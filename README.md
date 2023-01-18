@@ -1,4 +1,4 @@
 # Vision_Project
 
 // Large button
-https://deepnote.com/buttons/launch-in-deepnote-white.svg
+[<img src="https://deepnote.com/buttons/launch-in-deepnote-white.svg">](PROJECT_URL)
