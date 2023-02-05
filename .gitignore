@@ -1,7 +1,5 @@
 *.pdf
-pdf
-
+*.txt
 *.json
-GeoEstimation-master
-GeoEstimation-original_tf
+GeoEstimation
 .vscode
