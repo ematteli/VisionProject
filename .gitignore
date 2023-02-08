@@ -2,4 +2,4 @@
 *.txt
 *.json
 GeoEstimation
-.vscode
+.ipynb_checkpoints
