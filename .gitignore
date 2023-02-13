@@ -1,5 +1,7 @@
 *.pdf
 *.txt
 *.json
+cifar-10-python.tar.gz
 GeoEstimation
+cifar-10-batches-py
 .ipynb_checkpoints
