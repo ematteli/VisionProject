@@ -1,4 +1,7 @@
-from argparse import Namespace, ArgumentParser
+#questo pacchetto ha a che fare con gli argomenti che si passano 
+#quando si chiama il file.py da terminale come function
+from argparse import Namespace, ArgumentParser 
+
 from datetime import datetime
 import json
 import logging
@@ -12,17 +15,22 @@ import pandas as pd
 
 from classification import utils_global
 from classification.s2_utils import Partitioning, Hierarchy
-from classification.dataset import MsgPackIterableDatasetMultiTargetWithDynLabels
+from classification.dataset import ImageDataset
 
-
+#in questa classe vengono utilizzate altre 8 classi definte dagli autori del paper negli altri scirpt
 class MultiPartitioningClassifier(pl.LightningModule):
+    #MultiPartitioningClassifier è una classe figlia della classe pl.LightningModule
     def __init__(self, hparams: Namespace):
+        #con questo comando MultiPartitioningClassifier eredita tutti gli attributi e tutti i metodi di pl.LightningModule
         super().__init__()
+        #il nuovo attributo .hparams grazie a Namespace poi risulta avere
+        #una miriade di sotto attributi: hparams.optim, hparams.batch_size, ecc (11 attributi)
         self.hparams = hparams
-
+        #questi 4 attributi sono tutti output dei 2 metodi successivi
         self.partitionings, self.hierarchy = self.__init_partitionings()
         self.model, self.classifier = self.__build_model()
 
+#in totale ci sono 13 (nuovi) metodi all'interno di questa classe. 
     def __init_partitionings(self):
 
         partitionings = []
@@ -47,7 +55,7 @@ class MultiPartitioningClassifier(pl.LightningModule):
                 for i in range(len(self.partitionings))
             ]
         )
-
+        #se stiamo usando un modello pretrainato allora avremo già dei pesi
         if self.hparams.weights:
             logging.info("Load weights from pre-trained model")
             model, classifier = utils_global.load_weights_if_available(
@@ -329,11 +337,9 @@ class MultiPartitioningClassifier(pl.LightningModule):
             ]
         )
 
-        dataset = MsgPackIterableDatasetMultiTargetWithDynLabels(
+        dataset = ImageDataset(
             path=self.hparams.msgpack_train_dir,
             target_mapping=target_mapping,
-            key_img_id=self.hparams.key_img_id,
-            key_img_encoded=self.hparams.key_img_encoded,
             shuffle=True,
             transformation=tfm,
         )
@@ -361,15 +367,13 @@ class MultiPartitioningClassifier(pl.LightningModule):
                 ),
             ]
         )
-        dataset = MsgPackIterableDatasetMultiTargetWithDynLabels(
+        dataset = ImageDataset(
             path=self.hparams.msgpack_val_dir,
             target_mapping=target_mapping,
-            key_img_id=self.hparams.key_img_id,
-            key_img_encoded=self.hparams.key_img_encoded,
             shuffle=False,
             transformation=tfm,
             meta_path=self.hparams.val_meta_path,
-            cache_size=1024,
+            cache_size=128,
         )
 
         dataloader = torch.utils.data.DataLoader(
@@ -384,7 +388,7 @@ class MultiPartitioningClassifier(pl.LightningModule):
 
 def parse_args():
     args = ArgumentParser()
-    args.add_argument("-c", "--config", type=Path, default=Path("config/baseM.yml"))
+    args.add_argument("-c", "--config", type=Path, default=Path("config/prova.yml"))
     args.add_argument("--progbar", action="store_true")
     return args.parse_args()
 
@@ -426,6 +430,6 @@ def main():
 
     trainer.fit(model)
 
-
+#cosa fa questo??
 if __name__ == "__main__":
     main()
