@@ -184,6 +184,99 @@ class MsgPackIterableDatasetMultiTargetWithDynLabels(torch.utils.data.IterableDa
         return self.length
 
 
+
+
+class ImageDataset(torch.utils.data.IterableDataset):
+    """
+    Data source: jpeg image +  json with coordinates and cells for all images and possibly csv
+    """
+
+    def __init__(
+        self,
+        path: str,
+        target_mapping: Dict[str, int],
+        transformation=None,
+        shuffle=True,
+        meta_path=None,
+        cache_size=6 * 128,
+        lat_key="LAT",
+        lon_key="LON",
+    ):
+
+        super(ImageDataset, self).__init__()
+        self.path = path
+        self.cache_size = cache_size
+        self.transformation = transformation
+        self.shuffle = shuffle
+        self.seed = random.randint(1, 100)
+        self.target_mapping = target_mapping
+
+        for k, v in self.target_mapping.items():
+            if not isinstance(v, list):
+                self.target_mapping[k] = [v]
+        if len(self.target_mapping) == 0:
+            raise ValueError("No samples found.")
+
+        self.meta_path = meta_path
+        if meta_path is not None:
+            self.meta = pd.read_csv(meta_path, index_col=0)
+            self.meta = self.meta.astype({lat_key: "float32", lon_key: "float32"})
+            self.lat_key = lat_key
+            self.lon_key = lon_key
+
+        self.length = len(self.target_mapping)
+
+    def _process_sample(self, x):
+        # prepare image and target value
+
+        # decode and initial resize if necessary
+
+        img = Image.open(self.path + '/' + x).convert("RGB")
+
+        if img.width > 320 and img.height > 320:
+            img = torchvision.transforms.Resize(320)(img)
+
+        # apply all user specified image transformations
+        if self.transformation is not None:
+            img = self.transformation(img)
+
+        if self.meta_path is None:
+            return img, self.target_mapping[x]
+        else:
+            meta = self.meta.loc[x]
+            return img, self.target_mapping[x], meta[self.lat_key], meta[self.lon_key]
+
+    def __iter__(self):
+        cache = []
+
+        for x in self.target_mapping.keys():
+
+            if len(cache) < self.cache_size:
+                cache.append(x)
+
+            if len(cache) == self.cache_size:
+                if self.shuffle:
+                    random.shuffle(cache)
+                while cache:
+                    yield self._process_sample(cache.pop())
+
+        if self.shuffle:
+            random.shuffle(cache)
+        while cache:
+            yield self._process_sample(cache.pop())
+
+    def __len__(self):
+        return self.length
+
+
+
+
+
+
+
+
+
+
 class FiveCropImageDataset(torch.utils.data.Dataset):
     def __init__(
         self,
