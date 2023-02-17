@@ -3,6 +3,9 @@
 cifar-10-python.tar.gz
 GeoEstimation/models
 GeoEstimation/resources/images
+GeoEstimation/resources/yfcc25600_places365.csv
+GeoEstimation/resnet50_places365.pth.tar
+
 cifar-10-batches-py
 .ipynb_checkpoints
 .idea

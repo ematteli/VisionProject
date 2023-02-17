@@ -24,7 +24,7 @@ def download_pretrained_on_places(model_name="resnet50"):
         file.write(response.content)
 
 class SceneClassifier(torch.nn.Module):
-    def __init__(self, scene_hierarchy_file='scene_hierarchy_places365.csv', model_name="resnet50"):
+    def __init__(self, scene_hierarchy_file='scene_hierarchy_places365.csv', model_name="resnet50", runtime=None):
         super().__init__()
         assert model_name in ["resnet50", "resnet152"], f"model_name is {model_name}, should be resnet50 or resnet152"
         if not os.path.exists(scene_hierarchy_file):
@@ -35,44 +35,63 @@ class SceneClassifier(torch.nn.Module):
         with open(scene_hierarchy_file, 'r') as csvfile:
             content = csv.reader(csvfile, delimiter=',')
             next(content)  # skip explanation line
-            next(content)  # skip explanation line
+            next(content) # skip explanation line
             for line in content:
-                hierarchy_places3.append(line[1:4])
+                if len(line)!=0:
+                    hierarchy_places3.append(line[1:4])
                 
         hierarchy_places3 = np.asarray(hierarchy_places3, dtype=float)
         
         # normalize label if it belongs to multiple categories
         self.hierarchy_places3 = hierarchy_places3 / np.expand_dims(np.sum(hierarchy_places3, axis=1), axis=-1)
-        
+        self.runtime = runtime
         if not os.path.exists(f"{model_name}_places365.pth.tar"):
             download_pretrained_on_places(model_name)
         self.model = torchvision.models.resnet50(num_classes=365)
         
-        state_dict = torch.load(f"{model_name}_places365.pth.tar")["state_dict"]
+        state_dict = torch.load(f"{model_name}_places365.pth.tar", map_location=self.runtime)["state_dict"]
         state_dict = {k.replace("module.", ""): v for k, v in state_dict.items()}
         self.model.load_state_dict(state_dict)
         
         self.model.eval()
         self.transform = tfm.Compose([
-            tfm.ToTensor(),
             tfm.Resize([256, 256]),
+            tfm.ToTensor(),
             tfm.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225]),
+
         ])
     
-    def process_images(self, images_paths):
-        pil_images = [Image.open(p) for p in images_paths]
-        batch = [self.transform(p) for p in pil_images]
-        batch = torch.stack(batch)
-        return self(batch)
+    def process_images(self, images_paths, b_size=32):
+        my_batch = [[p for p in images_paths[ind*b_size:(ind+1)*b_size]] for ind in range(len(images_paths)//b_size)]
+        last = len(images_paths)//b_size-1
+        my_batch.append(images_paths[last:])
+        print(f'We have {len(my_batch)} batches')
+        places_prob, S3_labels = [],[]
+        i=1
+        for batch in my_batch:
+          print("We are at batch ",i)
+          pil_images = [Image.open(p) for p in batch]
+          b = [self.transform(p) for p in pil_images if len(list(p.split()))==3]
+          b = torch.stack(b)
+          print('this batch has size ', b.size())
+          probs, S3 = self.forward(b)
+          places_prob.extend(probs)
+          S3_labels.extend(S3)
+          i+=1
+        # batch = [self.transform(p) for p in pil_images if len(list(p.split()))==3]
+        #batch = torch.stack(batch)
+        
+
+        return places_prob, S3_labels
     
     def forward(self, batch):
         # Return a list of number that can be 0, 1 or 2
-        with torch.inference_mode():
+        with torch.no_grad():
             b, c, h, w = batch.shape
             scene_probs = self.model(batch)
             places_prob = np.matmul(scene_probs, self.hierarchy_places3)
-            scene_label_int = np.argmax(places_prob, axis=1)
-        return scene_label_int.tolist()
+            S3_labels = np.argmax(places_prob, axis=1)
+        return places_prob.tolist(), S3_labels.tolist()
     
     def label_int_to_str(self, scene_label_int):
         if scene_label_int == 0:
@@ -97,4 +116,3 @@ if __name__ == '__main__':
     places_prob = scene_classifier.process_images([args.image_path])
     label = scene_classifier.label_int_to_str(places_prob[0])
     print(f"Image {args.image_path} has label {label}")
-
