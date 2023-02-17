@@ -44,7 +44,7 @@ def assign_class_index(cell: s2.Cell, mapping: dict) -> Union[int, None]:
 
 def parse_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument("-c", "--config", type=Path, default="config/baseM.yml")
+    parser.add_argument("-c", "--config", type=Path, default="config/prova.yml")
     parser.add_argument(
         "-ci",
         "--column_img_path",

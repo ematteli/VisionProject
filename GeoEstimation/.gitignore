@@ -1,9 +1,10 @@
 /models
-/resources
+/resources/images
 /tmp
 /results
 mp16_places365.csv
-*.json
+mp16_urls.csv
+yfcc25600_urls.csv
 !cfg_ex.json
 
 
