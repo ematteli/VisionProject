@@ -198,7 +198,7 @@ class ImageDataset(torch.utils.data.IterableDataset):
         transformation=None,
         shuffle=True,
         meta_path=None,
-        cache_size=6 * 128,
+        cache_size=6 * 64,
         lat_key="LAT",
         lon_key="LON",
     ):
