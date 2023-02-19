@@ -65,7 +65,12 @@ class MultiPartitioningClassifier(pl.LightningModule):
         return model, classifier
 
     def forward(self, x):
-        fv = self.model(x)
+        if self.hparams.train_all:
+            fv = self.model(x)
+        else:
+            self.model.eval()
+            with torch.no_grad():
+                fv = self.model(x)
         yhats = [self.classifier[i](fv) for i in range(len(self.partitionings))]
         return yhats
 
@@ -76,7 +81,7 @@ class MultiPartitioningClassifier(pl.LightningModule):
             target = [target]
 
         # forward pass
-        output = self(images)
+        output = self(images) #self(...) è la stessa cosa di chiamare forward(...)
 
         # individual losses per partitioning
         losses = [

@@ -2,6 +2,7 @@ out_dir: data/models/prova2/
 model_params:
   arch: resnet50 # model architecture from torchvision namespace
   weights: models/base_M/epoch=014-val_loss=18.4833.ckpt # null -> all models are initialized with "ImageNet" weights or path to .ckpt to initialize from pre-trained model
+  train_all: False
   batch_size: 64
   val_check_interval: 0.5 # validate after each half epoch
   optim:
