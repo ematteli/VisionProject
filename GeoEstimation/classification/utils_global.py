@@ -49,17 +49,20 @@ def load_weights_if_available(
 ):
 
     checkpoint = torch.load(weights_path, map_location=lambda storage, loc: storage)
-
+    print('loading weight')
     state_dict_features = OrderedDict()
     state_dict_classifier = OrderedDict()
     for k, w in checkpoint["state_dict"].items():
         if k.startswith("model"):
             state_dict_features[k.replace("model.", "")] = w
+            print('model weights')
         elif k.startswith("classifier"):
             state_dict_classifier[k.replace("classifier.", "")] = w
+            print('classifier weights')
         else:
             logging.warning(f"Unexpected prefix in state_dict: {k}")
     model.load_state_dict(state_dict_features, strict=True)
+    classifier.load_state_dict(state_dict_classifier, strict=True)
     return model, classifier
 
 
