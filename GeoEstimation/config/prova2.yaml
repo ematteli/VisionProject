@@ -1,21 +1,20 @@
-
 out_dir: data/models/prova2/
 model_params:
   arch: resnet50 # model architecture from torchvision namespace
-  weights: null # null -> all models are initialized with "ImageNet" weights or path to .ckpt to initialize from pre-trained model
-  batch_size: 32
+  weights: models/base_M/epoch=014-val_loss=18.4833.ckpt # null -> all models are initialized with "ImageNet" weights or path to .ckpt to initialize from pre-trained model
+  batch_size: 64
   val_check_interval: 0.5 # validate after each half epoch
   optim:
     # SGD
     params:
-      lr: 0.01
+      lr: 0.001
       momentum: 0.9
       weight_decay: 0.0001
   scheduler:
     # MultiStepLR
     params:
       gamma: 0.5
-      milestones: [1]
+      milestones: [2]
   partitionings:
     ptype: default
     shortnames: [coarse, middle, fine]
@@ -36,9 +35,9 @@ model_params:
   num_workers_per_loader: 4
 # paramters for pytorch lightning trainer class
 trainer_params:
-  #gpus: 1
-  max_epochs: 2
-  distributed_backend: 'ddp_cpu'
+  #gpus: 1 #decomment if running on colab
+  max_epochs: 5
+  distributed_backend: 'ddp_cpu' #comment if running on colab
   #distributed_backend: null
   precision: 16
   reload_dataloaders_every_epoch: true # necessary to shuffle IterableDataset
