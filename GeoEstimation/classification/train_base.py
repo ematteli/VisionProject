@@ -59,7 +59,7 @@ class MultiPartitioningClassifier(pl.LightningModule):
         if self.hparams.weights:
             logging.info("Load weights from pre-trained model")
             model, classifier = utils_global.load_weights_if_available(
-                model, classifier, self.hparams.weights
+                model, classifier, self.hparams.weights, self.hparams.load_also_weights_classifier
             )
 
         return model, classifier

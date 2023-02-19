@@ -45,7 +45,7 @@ def build_base_model(arch: str):
 
 
 def load_weights_if_available(
-    model: torch.nn.Module, classifier: torch.nn.Module, weights_path: Union[str, Path]
+    model: torch.nn.Module, classifier: torch.nn.Module, weights_path: Union[str, Path], load_also_weights_classifier
 ):
 
     checkpoint = torch.load(weights_path, map_location=lambda storage, loc: storage)
@@ -60,7 +60,8 @@ def load_weights_if_available(
         else:
             logging.warning(f"Unexpected prefix in state_dict: {k}")
     model.load_state_dict(state_dict_features, strict=True)
-    classifier.load_state_dict(state_dict_classifier, strict=False)
+    if load_also_weights_classifier:
+        classifier.load_state_dict(state_dict_classifier, strict=False)
     return model, classifier
 
 
