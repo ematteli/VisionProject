@@ -1,4 +1,4 @@
-out_dir: data/models/prova2/
+out_dir: data/models/prova10k/
 model_params:
   arch: resnet50 # model architecture from torchvision namespace
   weights: models/base_M/epoch=014-val_loss=18.4833.ckpt # null -> all models are initialized with "ImageNet" weights or path to .ckpt to initialize from pre-trained model
