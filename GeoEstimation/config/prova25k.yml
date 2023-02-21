@@ -1,4 +1,4 @@
-out_dir: data/models/prova10k/
+out_dir: data/models/prova25k/
 model_params:
   arch: resnet50 # model architecture from torchvision namespace
   architecture_number: 0
@@ -30,11 +30,11 @@ model_params:
   msgpack_val_dir: resources/images/im2gps
   # meta information i.e. coordinates for each image
   train_meta_path: resources/data25k_places365.csv
-  val_meta_path: resources/im2gps_places365.csv
+  val_meta_path: resources/im2gps3k_places365.csv
   # mapping from image ids in msgpack dataset to target value(s)
   # orient: index -> {"img_id": [t1, t2], ...}
   train_label_mapping: resources/data25k_places365_mapping_h3.json
-  val_label_mapping: resources/im2gps_places365_mapping_h3.json
+  val_label_mapping: resources/im2gps3k_places365_mapping_h3.json
   num_workers_per_loader: 4
 # paramters for pytorch lightning trainer class
 trainer_params:
