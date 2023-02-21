@@ -28,7 +28,10 @@ class MultiPartitioningClassifier(pl.LightningModule):
         self.hparams = hparams
         #questi 4 attributi sono tutti output dei 2 metodi successivi
         self.partitionings, self.hierarchy = self.__init_partitionings()
-        self.model, self.classifier = self.__build_model()
+        model, classifier = self.__build_model()
+        self.model, self.intermediate, self.classifier = self.__build_intermediate_layer(model, classifier,
+                                                                                         self.nfeatures,
+                                                                                         option=self.hparams.architecture_number)
 
 #in totale ci sono 13 (nuovi) metodi all'interno di questa classe. 
     def __init_partitionings(self):
@@ -49,6 +52,8 @@ class MultiPartitioningClassifier(pl.LightningModule):
         logging.info("Build model")
         model, nfeatures = utils_global.build_base_model(self.hparams.arch)
 
+        self.nfeatures = nfeatures
+
         classifier = torch.nn.ModuleList(
             [
                 torch.nn.Linear(nfeatures, len(self.partitionings[i]))
@@ -64,6 +69,21 @@ class MultiPartitioningClassifier(pl.LightningModule):
 
         return model, classifier
 
+    def __build_intermediate_layer(self, model, classifier, nfeatures, option):
+        if option == 0: #keep original architecture
+            inter = False
+        elif option == 1: #add fully connected layer in-between model and classifier
+            inter = torch.nn.Sequential(torch.nn.Linear(nfeatures, nfeatures), torch.nn.ReLU())
+        elif option == 2: #add fully connected layer initialized close to identity
+            inter = torch.nn.Sequential(torch.nn.Linear(nfeatures, nfeatures), torch.nn.Tanh())
+            inter[0].weight.data.copy_(torch.normal(torch.eye(nfeatures), 0.05))
+        elif option == 3:  #add fully connected layer initialized close to last layer weights
+            inter = torch.nn.Sequential(torch.nn.Linear(nfeatures, nfeatures), torch.nn.ReLU())
+            last_layer = list(model.children())[-1]
+            inter[0].weight.data = last_layer.weight.data.clone()
+            inter[0].bias.data = last_layer.bias.data.clone()
+        return model, inter, classifier
+
     def forward(self, x):
         if self.hparams.train_all:
             fv = self.model(x)
@@ -71,7 +91,11 @@ class MultiPartitioningClassifier(pl.LightningModule):
             self.model.eval()
             with torch.no_grad():
                 fv = self.model(x)
-        yhats = [self.classifier[i](fv) for i in range(len(self.partitionings))]
+        if self.intermediate:
+            inter = self.intermediate(fv)
+        else:
+            inter = fv
+        yhats = [self.classifier[i](inter) for i in range(len(self.partitionings))]
         return yhats
 
     def training_step(self, batch, batch_idx, optimizer_idx=None):
