@@ -1,0 +1,46 @@
+out_dir: data/models/prova25k/
+model_params:
+  arch: resnet50 # model architecture from torchvision namespace
+  architecture_number: 0
+  weights: models/base_M/epoch=014-val_loss=18.4833.ckpt # null -> all models are initialized with "ImageNet" weights or path to .ckpt to initialize from pre-trained model
+  train_all: False
+  load_also_weights_classifier: True
+  batch_size: 64
+  val_check_interval: 0.5 # validate after each half epoch
+  optim:
+    # SGD
+    params:
+      lr: 0.001
+      momentum: 0.9
+      weight_decay: 0.0001
+  scheduler:
+    # MultiStepLR
+    params:
+      gamma: 0.5
+      milestones: [2]
+  partitionings:
+    ptype: default
+    shortnames: [coarse, middle, fine]
+    files:
+      - resources/s2_cells/cells_50_5000.csv
+      - resources/s2_cells/cells_50_2000.csv
+      - resources/s2_cells/cells_50_1000.csv
+  # images stored in chunks
+  msgpack_train_dir: resources/images/new_data10k
+  msgpack_val_dir: resources/images/im2gps
+  # meta information i.e. coordinates for each image
+  train_meta_path: resources/reduced_places365.csv
+  val_meta_path: resources/im2gps3k_places365.csv
+  # mapping from image ids in msgpack dataset to target value(s)
+  # orient: index -> {"img_id": [t1, t2], ...}
+  train_label_mapping: resources/reduced_places365_mapping_h3.json
+  val_label_mapping: resources/im2gps3k_places365_mapping_h3.json
+  num_workers_per_loader: 4
+# paramters for pytorch lightning trainer class
+trainer_params:
+  #gpus: 1 #decomment if running on colab
+  max_epochs: 5
+  distributed_backend: 'ddp_cpu' #comment if running on colab
+  #distributed_backend: null
+  precision: 16
+  reload_dataloaders_every_epoch: true # necessary to shuffle IterableDataset
